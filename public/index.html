@@ -3,32 +3,247 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        text-align: center;
-      }
-      h1 {
-        font-size: 2em;
-        color: #333;
-      }
-      p {
-        font-size: 1.2em;
-        color: #666;
-      }
-    </style>
+    <title>can i talk to you</title>
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1>Welcome to my page</h1>
-    <p>This is a very basic page with some text and some style.</p>
+    <button class="menu-toggle" onclick="toggleSidebar()">≡</button>
+
+    <div class="app-container">
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="app-title">can i talk to you</div>
+        </div>
+
+        <div class="contacts-list">
+          <div
+            class="contact-item active"
+            onclick="selectContact(this, 'claude_ai', 'claude')"
+          >
+            <div class="contact-avatar">
+              c
+              <div class="status-dot"></div>
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">claude</div>
+              <div class="contact-status">active now</div>
+            </div>
+          </div>
+
+          <div
+            class="contact-item"
+            onclick="selectContact(this, 'sarah_j', 'sarah.j')"
+          >
+            <div class="contact-avatar">s</div>
+            <div class="contact-info">
+              <div class="contact-name">sarah.j</div>
+              <div class="contact-status">5m ago</div>
+            </div>
+          </div>
+
+          <div
+            class="contact-item"
+            onclick="selectContact(this, 'mike_dev', 'mike.dev')"
+          >
+            <div class="contact-avatar">m</div>
+            <div class="contact-info">
+              <div class="contact-name">mike.dev</div>
+              <div class="contact-status">2h ago</div>
+            </div>
+          </div>
+
+          <div
+            class="contact-item"
+            onclick="selectContact(this, 'emma_d', 'emma.d')"
+          >
+            <div class="contact-avatar">
+              e
+              <div class="status-dot"></div>
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">emma.d</div>
+              <div class="contact-status">active now</div>
+            </div>
+          </div>
+
+          <div
+            class="contact-item"
+            onclick="selectContact(this, 'alex_r', 'alex.r')"
+          >
+            <div class="contact-avatar">a</div>
+            <div class="contact-info">
+              <div class="contact-name">alex.r</div>
+              <div class="contact-status">yesterday</div>
+            </div>
+          </div>
+
+          <div
+            class="contact-item"
+            onclick="selectContact(this, 'team_lead', 'team.lead')"
+          >
+            <div class="contact-avatar">t</div>
+            <div class="contact-info">
+              <div class="contact-name">team.lead</div>
+              <div class="contact-status">3d ago</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-indicator">[6] contacts • [2] online</div>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="chat-title" id="chatTitle">claude</div>
+        </div>
+
+        <div class="messages-area" id="messagesArea">
+          <div class="message received">
+            hello. i'm claude. how can i assist you today?
+          </div>
+        </div>
+
+        <div class="input-container">
+          <div class="input-wrapper">
+            <input
+              type="text"
+              class="message-input"
+              id="messageInput"
+              placeholder="type message..."
+              onkeypress="handleKeyPress(event)"
+            />
+            <button class="send-button" onclick="sendMessage()">↗</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
-
     <script>
       const socket = io();
 
-      
+      let currentContact = "claude";
+      let isSidebarOpen = false;
+
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        isSidebarOpen = !isSidebarOpen;
+
+        if (isSidebarOpen) {
+          sidebar.classList.add("open");
+        } else {
+          sidebar.classList.remove("open");
+        }
+      }
+
+      function selectContact(element, contactId, displayName) {
+        // Remove active class from all contacts
+        document.querySelectorAll(".contact-item").forEach((item) => {
+          item.classList.remove("active");
+        });
+
+        // Add active class to selected contact
+        element.classList.add("active");
+
+        // Update chat title
+        document.getElementById("chatTitle").textContent = displayName;
+        currentContact = displayName;
+
+        // Clear messages and show initial message
+        const messagesArea = document.getElementById("messagesArea");
+        messagesArea.innerHTML = "";
+
+        if (displayName === "claude") {
+          messagesArea.innerHTML =
+            '<div class="message received">hello. i\'m claude. how can i assist you today?</div>';
+        } else {
+          messagesArea.innerHTML = `<div class="message received">hey, this is ${displayName}. ready to chat?</div>`;
+        }
+
+        // Close sidebar on mobile after selection
+        if (window.innerWidth <= 768) {
+          toggleSidebar();
+        }
+      }
+
+      function sendMessage() {
+        const input = document.getElementById("messageInput");
+        const message = input.value.trim();
+
+        if (message) {
+          const messagesArea = document.getElementById("messagesArea");
+
+          // Add sent message
+          const sentMessage = document.createElement("div");
+          sentMessage.className = "message sent";
+          sentMessage.textContent = message.toLowerCase();
+          messagesArea.appendChild(sentMessage);
+
+          // Simulate response for Claude
+          if (currentContact === "claude") {
+            setTimeout(() => {
+              const response = getClaudeResponse(message);
+              const receivedMessage = document.createElement("div");
+              receivedMessage.className = "message received";
+              receivedMessage.textContent = response;
+              messagesArea.appendChild(receivedMessage);
+              messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 800 + Math.random() * 1200);
+          }
+
+          input.value = "";
+          messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
+      }
+
+      function getClaudeResponse(message) {
+        const responses = [
+          "interesting perspective. let me think about that.",
+          "i understand what you're asking.",
+          "that's a thoughtful question.",
+          "i'd be happy to help with that.",
+          "good point. here's what i think...",
+          "i see what you mean.",
+          "that makes sense to me.",
+          "thanks for clarifying that.",
+          "i appreciate you sharing that.",
+          "let me process that for a moment...",
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          sendMessage();
+        }
+      }
+
+      // Close sidebar when clicking outside on mobile
+      document.addEventListener("click", function (event) {
+        const sidebar = document.getElementById("sidebar");
+        const menuToggle = document.querySelector(".menu-toggle");
+
+        if (
+          isSidebarOpen &&
+          !sidebar.contains(event.target) &&
+          !menuToggle.contains(event.target)
+        ) {
+          toggleSidebar();
+        }
+      });
+
+      // Auto-focus input on load
+      document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("messageInput").focus();
+      });
+
+      // Handle window resize
+      window.addEventListener("resize", function () {
+        if (window.innerWidth > 768 && isSidebarOpen) {
+          document.getElementById("sidebar").classList.remove("open");
+          isSidebarOpen = false;
+        }
+      });
     </script>
   </body>
 </html>
