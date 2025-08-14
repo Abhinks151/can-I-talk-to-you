@@ -52,11 +52,127 @@ body::before {
   z-index: 0;
 }
 
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.modal {
+  background: linear-gradient(
+    135deg,
+    var(--bg-secondary) 0%,
+    var(--bg-tertiary) 100%
+  );
+  border: 1px solid var(--border-light);
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 0 30px rgba(0, 255, 0, 0.1);
+}
+
+.modal h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  text-transform: lowercase;
+}
+
+.modal p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.modal-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.modal-input::placeholder {
+  color: var(--text-quaternary);
+  font-weight: 300;
+}
+
+.modal-input:focus {
+  border-color: var(--accent);
+  background: rgba(0, 255, 0, 0.05);
+  box-shadow: 0 0 0 2px rgba(0, 255, 0, 0.1);
+}
+
+.modal-button {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 0, 0.2) 0%,
+    rgba(0, 255, 0, 0.1) 100%
+  );
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 24px;
+  cursor: pointer;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  text-transform: lowercase;
+  width: 100%;
+}
+
+.modal-button:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 255, 0, 0.3) 0%,
+    rgba(0, 255, 0, 0.2) 100%
+  );
+  box-shadow: 0 0 16px rgba(0, 255, 0, 0.4);
+  color: var(--text-primary);
+}
+
+.modal-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .app-container {
   height: 100vh;
   display: flex;
   position: relative;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.app-container.visible {
+  opacity: 1;
 }
 
 /* Pixelated logo styles */
@@ -85,6 +201,7 @@ body::before {
   color: var(--accent-secondary);
   margin-left: 4px;
 }
+
 /* Sidebar */
 .sidebar {
   width: 320px;
@@ -98,6 +215,8 @@ body::before {
   display: flex;
   flex-direction: column;
   transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  z-index: 10;
 }
 
 .sidebar-header {
@@ -218,6 +337,8 @@ body::before {
     var(--bg-primary) 0%,
     var(--bg-secondary) 100%
   );
+  position: relative;
+  z-index: 1;
 }
 
 .chat-header {
@@ -406,7 +527,7 @@ body::before {
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 1000;
+  z-index: 1001;
   background: linear-gradient(
     135deg,
     var(--bg-quaternary) 0%,
@@ -418,6 +539,45 @@ body::before {
   cursor: pointer;
   font-family: "JetBrains Mono", monospace;
   font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.menu-toggle:hover {
+  background: linear-gradient(
+    135deg,
+    var(--bg-light) 0%,
+    var(--bg-quaternary) 100%
+  );
+  color: var(--text-primary);
+}
+
+/* Mobile overlay for sidebar */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.status-indicator {
+  position: absolute;
+  bottom: 8px;
+  right: 20px;
+  font-size: 10px;
+  color: var(--text-quaternary);
+  font-family: "JetBrains Mono", monospace;
 }
 
 /* Responsive design */
@@ -426,12 +586,16 @@ body::before {
     display: block;
   }
 
+  .sidebar-overlay {
+    display: block;
+  }
+
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     height: 100vh;
-    z-index: 999;
+    z-index: 100;
     transform: translateX(-100%);
     width: 280px;
   }
@@ -442,6 +606,7 @@ body::before {
 
   .chat-container {
     width: 100%;
+    margin-left: 0;
   }
 
   .messages-area {
@@ -464,7 +629,8 @@ body::before {
 
 @media (max-width: 480px) {
   .sidebar {
-    width: 100vw;
+    width: 85vw;
+    max-width: 300px;
   }
 
   .messages-area {
@@ -479,19 +645,18 @@ body::before {
     padding: 12px 16px;
     padding-left: 50px;
   }
+
+  .modal {
+    padding: 24px;
+  }
+
+  .modal h2 {
+    font-size: 16px;
+  }
 }
 
 /* Glow effects for retro gaming aesthetic */
 .contact-item.active .contact-avatar {
   box-shadow: 0 0 12px rgba(0, 255, 0, 0.4);
   border-color: var(--accent);
-}
-
-.status-indicator {
-  position: absolute;
-  bottom: 8px;
-  right: 20px;
-  font-size: 10px;
-  color: var(--text-quaternary);
-  font-family: "JetBrains Mono", monospace;
 }

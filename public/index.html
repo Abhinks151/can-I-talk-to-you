@@ -4,12 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>can i talk to you</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <button class="menu-toggle" onclick="toggleSidebar()">≡</button>
+    <!-- Name Entry Modal -->
+    <div class="modal-overlay" id="nameModal">
+      <div class="modal">
+        <h2>welcome to the chat</h2>
+        <p>enter your name to start chatting with your contacts</p>
+        <input
+          type="text"
+          class="modal-input"
+          id="nameInput"
+          placeholder="your name..."
+          maxlength="20"
+        />
+        <button class="modal-button" id="enterButton" onclick="enterChat()">
+          enter chat
+        </button>
+      </div>
+    </div>
 
-    <div class="app-container">
+    <!-- Mobile overlay for sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">≡</button>
+
+    <div class="app-container" id="appContainer">
       <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <div class="app-title">
@@ -120,22 +141,46 @@
       </div>
     </div>
 
-    <script src="/socket.io/socket.io.js"></script>
-
     <script>
-      const socket = io();
-
       let currentContact = "claude";
       let isSidebarOpen = false;
+      let userName = "";
+
+      // Modal functionality
+      function enterChat() {
+        const nameInput = document.getElementById("nameInput");
+        const name = nameInput.value.trim();
+
+        if (name) {
+          userName = name;
+          const modal = document.getElementById("nameModal");
+          const appContainer = document.getElementById("appContainer");
+
+          modal.classList.add("hidden");
+          setTimeout(() => {
+            appContainer.classList.add("visible");
+            document.getElementById("messageInput").focus();
+          }, 300);
+        }
+      }
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebarOverlay");
         isSidebarOpen = !isSidebarOpen;
 
         if (isSidebarOpen) {
           sidebar.classList.add("open");
+          overlay.classList.add("active");
         } else {
           sidebar.classList.remove("open");
+          overlay.classList.remove("active");
+        }
+      }
+
+      function closeSidebar() {
+        if (isSidebarOpen) {
+          toggleSidebar();
         }
       }
 
@@ -165,7 +210,7 @@
 
         // Close sidebar on mobile after selection
         if (window.innerWidth <= 768) {
-          toggleSidebar();
+          closeSidebar();
         }
       }
 
@@ -192,6 +237,16 @@
               messagesArea.appendChild(receivedMessage);
               messagesArea.scrollTop = messagesArea.scrollHeight;
             }, 800 + Math.random() * 1200);
+          } else {
+            // Simulate response from other contacts
+            setTimeout(() => {
+              const response = getGenericResponse(currentContact);
+              const receivedMessage = document.createElement("div");
+              receivedMessage.className = "message received";
+              receivedMessage.textContent = response;
+              messagesArea.appendChild(receivedMessage);
+              messagesArea.scrollTop = messagesArea.scrollHeight;
+            }, 600 + Math.random() * 1000);
           }
 
           input.value = "";
@@ -215,37 +270,56 @@
         return responses[Math.floor(Math.random() * responses.length)];
       }
 
+      function getGenericResponse(contact) {
+        const responses = [
+          `hey ${userName}, that's cool!`,
+          "totally agree with you on that",
+          "haha nice one",
+          "yeah i see what you mean",
+          "that's interesting!",
+          "sounds good to me",
+          "oh really? tell me more",
+          "nice! thanks for sharing",
+        ];
+        return responses[Math.floor(Math.random() * responses.length)];
+      }
+
       function handleKeyPress(event) {
         if (event.key === "Enter") {
           sendMessage();
         }
       }
 
-      // Close sidebar when clicking outside on mobile
-      document.addEventListener("click", function (event) {
-        const sidebar = document.getElementById("sidebar");
-        const menuToggle = document.querySelector(".menu-toggle");
-
-        if (
-          isSidebarOpen &&
-          !sidebar.contains(event.target) &&
-          !menuToggle.contains(event.target)
-        ) {
-          toggleSidebar();
+      // Handle name input enter key
+      document.getElementById("nameInput").addEventListener("keypress", function (event) {
+        if (event.key === "Enter") {
+          enterChat();
         }
-      });
-
-      // Auto-focus input on load
-      document.addEventListener("DOMContentLoaded", function () {
-        document.getElementById("messageInput").focus();
       });
 
       // Handle window resize
       window.addEventListener("resize", function () {
         if (window.innerWidth > 768 && isSidebarOpen) {
-          document.getElementById("sidebar").classList.remove("open");
-          isSidebarOpen = false;
+          closeSidebar();
         }
+      });
+
+      // Initialize
+      document.addEventListener("DOMContentLoaded", function () {
+        // Focus on name input when modal loads
+        document.getElementById("nameInput").focus();
+        
+        // Enable enter button when name is typed
+        const nameInput = document.getElementById("nameInput");
+        const enterButton = document.getElementById("enterButton");
+        
+        nameInput.addEventListener("input", function() {
+          if (this.value.trim()) {
+            enterButton.disabled = false;
+          } else {
+            enterButton.disabled = true;
+          }
+        });
       });
     </script>
   </body>
