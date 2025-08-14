@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>can i talk to you</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -25,10 +31,19 @@
       </div>
     </div>
 
-    <!-- Mobile overlay for sidebar -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+    <!-- Toaster -->
+    <div class="toast-container" id="toastContainer"></div>
 
-    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">≡</button>
+    <!-- Mobile overlay for sidebar -->
+    <div
+      class="sidebar-overlay"
+      id="sidebarOverlay"
+      onclick="closeSidebar()"
+    ></div>
+
+    <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">
+      ≡
+    </button>
 
     <div class="app-container" id="appContainer">
       <div class="sidebar" id="sidebar">
@@ -141,7 +156,11 @@
       </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
+
     <script>
+      const socket = io();
+
       let currentContact = "claude";
       let isSidebarOpen = false;
       let userName = "";
@@ -156,11 +175,16 @@
           const modal = document.getElementById("nameModal");
           const appContainer = document.getElementById("appContainer");
 
-          modal.classList.add("hidden");
-          setTimeout(() => {
-            appContainer.classList.add("visible");
-            document.getElementById("messageInput").focus();
-          }, 300);
+          socket.emit("userRegister", userName);
+
+          socket.on("userJoined", (username) => {
+            modal.classList.add("hidden");
+            setTimeout(() => {
+              appContainer.classList.add("visible");
+              document.getElementById("messageInput").focus();
+              showToaster("success", `welcome ${userName}`);
+            }, 300);
+          });
         }
       }
 
@@ -291,11 +315,13 @@
       }
 
       // Handle name input enter key
-      document.getElementById("nameInput").addEventListener("keypress", function (event) {
-        if (event.key === "Enter") {
-          enterChat();
-        }
-      });
+      document
+        .getElementById("nameInput")
+        .addEventListener("keypress", function (event) {
+          if (event.key === "Enter") {
+            enterChat();
+          }
+        });
 
       // Handle window resize
       window.addEventListener("resize", function () {
@@ -308,12 +334,12 @@
       document.addEventListener("DOMContentLoaded", function () {
         // Focus on name input when modal loads
         document.getElementById("nameInput").focus();
-        
+
         // Enable enter button when name is typed
         const nameInput = document.getElementById("nameInput");
         const enterButton = document.getElementById("enterButton");
-        
-        nameInput.addEventListener("input", function() {
+
+        nameInput.addEventListener("input", function () {
           if (this.value.trim()) {
             enterButton.disabled = false;
           } else {
@@ -321,6 +347,165 @@
           }
         });
       });
+
+      // Enhanced Retro Toaster Class
+      class RetroToaster {
+        constructor() {
+          this.container =
+            document.getElementById("toastContainer") || this.createContainer();
+          this.toastCount = 0;
+          this.activeToasts = new Map();
+        }
+
+        createContainer() {
+          const container = document.createElement("div");
+          container.id = "toastContainer";
+          container.className = "toast-container";
+          document.body.appendChild(container);
+          return container;
+        }
+
+        show(type = "info", title = "", message = "", duration = 5000) {
+          const toast = this.createToast(type, title, message, duration);
+          this.container.appendChild(toast);
+
+          // Store reference for cleanup
+          this.activeToasts.set(toast.id, {
+            element: toast,
+            timeout: null,
+            progressInterval: null,
+          });
+
+          // Trigger animation
+          requestAnimationFrame(() => {
+            toast.classList.add("show");
+          });
+
+          // Auto remove with progress bar
+          if (duration > 0) {
+            this.startProgressBar(toast, duration);
+            const timeoutId = setTimeout(() => {
+              this.remove(toast);
+            }, duration);
+            this.activeToasts.get(toast.id).timeout = timeoutId;
+          }
+
+          return toast;
+        }
+
+        createToast(type, title, message, duration) {
+          const toast = document.createElement("div");
+          toast.className = `toast ${type}`;
+          toast.id = `toast-${++this.toastCount}`;
+
+          const iconMap = {
+            success: "✓",
+            error: "✗",
+            warning: "!",
+            info: "i",
+          };
+
+          toast.innerHTML = `
+            <div class="toast-header">
+              <div class="toast-title">
+                <span class="toast-icon">${iconMap[type] || iconMap.info}</span>
+                ${title}
+              </div>
+              <button class="toast-close" onclick="toaster.remove(document.getElementById('${
+                toast.id
+              }'))">&times;</button>
+            </div>
+            ${message ? `<div class="toast-message">${message}</div>` : ""}
+            ${
+              duration > 0
+                ? `<div class="toast-progress"><div class="toast-progress-bar"></div></div>`
+                : ""
+            }
+          `;
+
+          // Add click to dismiss
+          toast.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("toast-close")) {
+              this.remove(toast);
+            }
+          });
+
+          return toast;
+        }
+
+        startProgressBar(toast, duration) {
+          const progressBar = toast.querySelector(".toast-progress-bar");
+          if (!progressBar) return;
+
+          let elapsed = 0;
+          const interval = 50; // Update every 50ms
+
+          const progressInterval = setInterval(() => {
+            elapsed += interval;
+            const percentage = (elapsed / duration) * 100;
+            progressBar.style.width = `${Math.min(percentage, 100)}%`;
+
+            if (elapsed >= duration) {
+              clearInterval(progressInterval);
+            }
+          }, interval);
+
+          this.activeToasts.get(toast.id).progressInterval = progressInterval;
+        }
+
+        remove(toast) {
+          if (!toast || !toast.parentNode) return;
+
+          const toastData = this.activeToasts.get(toast.id);
+          if (toastData) {
+            // Clear timeout and interval
+            if (toastData.timeout) clearTimeout(toastData.timeout);
+            if (toastData.progressInterval)
+              clearInterval(toastData.progressInterval);
+            this.activeToasts.delete(toast.id);
+          }
+
+          toast.classList.remove("show");
+          toast.classList.add("hide");
+
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.parentNode.removeChild(toast);
+            }
+          }, 300);
+        }
+
+        // Convenience methods
+        success(title, message = "", duration = 5000) {
+          return this.show("success", title, message, duration);
+        }
+
+        error(title, message = "", duration = 5000) {
+          return this.show("error", title, message, duration);
+        }
+
+        warning(title, message = "", duration = 5000) {
+          return this.show("warning", title, message, duration);
+        }
+
+        info(title, message = "", duration = 5000) {
+          return this.show("info", title, message, duration);
+        }
+
+        // Clear all toasts
+        clear() {
+          this.activeToasts.forEach((data, id) => {
+            this.remove(data.element);
+          });
+        }
+      }
+
+      // Initialize the toaster
+      const toaster = new RetroToaster();
+
+      function showToaster(type, message) {
+        toaster[type](type, message);
+      }
     </script>
   </body>
 </html>
