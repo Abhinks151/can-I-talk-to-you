@@ -177,12 +177,12 @@
 
           socket.emit("userRegister", userName);
 
-          socket.on("userJoined", (username) => {
+          socket.on("userJoined", (user) => {
             modal.classList.add("hidden");
             setTimeout(() => {
               appContainer.classList.add("visible");
               document.getElementById("messageInput").focus();
-              showToaster("success", `welcome ${userName}`);
+              showToaster("success", `welcome ${user.name} with socketId ${user.socketId}`);
             }, 300);
           });
         }
