@@ -1,3 +1,4 @@
+import { toogleStatusAndUpdateLastSeen } from "../services/userService.js";
 import { userSocket } from "./userSocket.js";
 
 
@@ -8,11 +9,12 @@ export const registerSockets = function registerSockets(io) {
 
 
 
-    
+
 
     userSocket(io, socket);
 
     socket.on('disconnect', async () => {
+      await toogleStatusAndUpdateLastSeen(socket.id)
       console.log('A user disconnected');
     });
   });

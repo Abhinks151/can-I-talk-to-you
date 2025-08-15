@@ -18,16 +18,21 @@
       <div class="modal">
         <h2>welcome to the chat</h2>
         <p>enter your name to start chatting with your contacts</p>
-        <input
-          type="text"
-          class="modal-input"
-          id="nameInput"
-          placeholder="your name..."
-          maxlength="20"
-        />
-        <button class="modal-button" id="enterButton" onclick="enterChat()">
-          enter chat
-        </button>
+        <form id="nameForm">
+          <input
+            type="text"
+            class="modal-input"
+            id="nameInput"
+            placeholder="your name..."
+            maxlength="20"
+            autocomplete="off"
+            required
+          />
+          <!-- make button a submit button, not "button" -->
+          <button type="submit" class="modal-button" id="enterButton">
+            enter chat
+          </button>
+        </form>
       </div>
     </div>
 
@@ -172,21 +177,32 @@
 
         if (name) {
           userName = name;
-          const modal = document.getElementById("nameModal");
-          const appContainer = document.getElementById("appContainer");
-
+          console.log("EMITTING userRegister for", name, Date.now());
           socket.emit("userRegister", userName);
-
-          socket.on("userJoined", (user) => {
-            modal.classList.add("hidden");
-            setTimeout(() => {
-              appContainer.classList.add("visible");
-              document.getElementById("messageInput").focus();
-              showToaster("success", `welcome ${user.name} with socketId ${user.socketId}`);
-            }, 300);
-          });
         }
       }
+
+      socket.on("userJoined", (user) => {
+        const modal = document.getElementById("nameModal");
+        const appContainer = document.getElementById("appContainer");
+
+        modal.classList.add("hidden");
+        setTimeout(() => {
+          appContainer.classList.add("visible");
+          document.getElementById("messageInput").focus();
+          showToaster(
+            "success",
+            `welcome ${user.name} with socketId ${user.socketId}`
+          );
+        }, 300);
+      });
+
+      document
+        .getElementById("nameForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault(); // prevent reload
+          enterChat();
+        });
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
@@ -313,15 +329,6 @@
           sendMessage();
         }
       }
-
-      // Handle name input enter key
-      document
-        .getElementById("nameInput")
-        .addEventListener("keypress", function (event) {
-          if (event.key === "Enter") {
-            enterChat();
-          }
-        });
 
       // Handle window resize
       window.addEventListener("resize", function () {
