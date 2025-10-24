@@ -4,6 +4,7 @@ import { User } from "../models/users.js";
 export const updateSocketId = async (name, newId) => {
   const user = await User.findOne({ name });
   user.socketId = newId;
+  user.isActive = true;
   await user.save();
 }
 

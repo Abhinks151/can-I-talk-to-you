@@ -1,3 +1,4 @@
+import { allContacts } from "../services/appService.js";
 import { createUser, findUserByName, updateSocketId } from "../services/userService.js";
 
 export const userSocket = async (io, socket) => {
@@ -22,8 +23,10 @@ export const userSocket = async (io, socket) => {
 
         io.to(socket.id).emit('userJoined', newUser);
       }
-
-
+      
+      //find better way to do it
+      const allUsers = await allContacts();
+      io.emit('allContacts', allUsers);
 
     });
   } catch (error) {

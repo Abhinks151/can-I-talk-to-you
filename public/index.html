@@ -28,7 +28,6 @@
             autocomplete="off"
             required
           />
-          <!-- make button a submit button, not "button" -->
           <button type="submit" class="modal-button" id="enterButton">
             enter chat
           </button>
@@ -58,81 +57,13 @@
           </div>
         </div>
 
-        <div class="contacts-list">
-          <div
-            class="contact-item active"
-            onclick="selectContact(this, 'claude_ai', 'claude')"
-          >
-            <div class="contact-avatar">
-              c
-              <div class="status-dot"></div>
-            </div>
-            <div class="contact-info">
-              <div class="contact-name">claude</div>
-              <div class="contact-status">active now</div>
-            </div>
-          </div>
-
-          <div
-            class="contact-item"
-            onclick="selectContact(this, 'sarah_j', 'sarah.j')"
-          >
-            <div class="contact-avatar">s</div>
-            <div class="contact-info">
-              <div class="contact-name">sarah.j</div>
-              <div class="contact-status">5m ago</div>
-            </div>
-          </div>
-
-          <div
-            class="contact-item"
-            onclick="selectContact(this, 'mike_dev', 'mike.dev')"
-          >
-            <div class="contact-avatar">m</div>
-            <div class="contact-info">
-              <div class="contact-name">mike.dev</div>
-              <div class="contact-status">2h ago</div>
-            </div>
-          </div>
-
-          <div
-            class="contact-item"
-            onclick="selectContact(this, 'emma_d', 'emma.d')"
-          >
-            <div class="contact-avatar">
-              e
-              <div class="status-dot"></div>
-            </div>
-            <div class="contact-info">
-              <div class="contact-name">emma.d</div>
-              <div class="contact-status">active now</div>
-            </div>
-          </div>
-
-          <div
-            class="contact-item"
-            onclick="selectContact(this, 'alex_r', 'alex.r')"
-          >
-            <div class="contact-avatar">a</div>
-            <div class="contact-info">
-              <div class="contact-name">alex.r</div>
-              <div class="contact-status">yesterday</div>
-            </div>
-          </div>
-
-          <div
-            class="contact-item"
-            onclick="selectContact(this, 'team_lead', 'team.lead')"
-          >
-            <div class="contact-avatar">t</div>
-            <div class="contact-info">
-              <div class="contact-name">team.lead</div>
-              <div class="contact-status">3d ago</div>
-            </div>
-          </div>
+        <div class="contacts-list" id="contactsList">
+          <!-- Contacts will be rendered here dynamically -->
         </div>
 
-        <div class="status-indicator">[6] contacts • [2] online</div>
+        <div class="status-indicator" id="statusIndicator">
+          <!-- Status will be updated dynamically -->
+        </div>
       </div>
 
       <div class="chat-container">
@@ -170,6 +101,110 @@
       let isSidebarOpen = false;
       let userName = "";
 
+      // // Contacts array - you can easily modify this to add/remove contacts
+      // const contacts = [
+      //   {
+      //     id: 'claude_ai',
+      //     name: 'claude',
+      //     avatar: 'c',
+      //     status: 'active now',
+      //     isOnline: true
+      //   },
+      //   {
+      //     id: 'sarah_j',
+      //     name: 'sarah.j',
+      //     avatar: 's',
+      //     status: '5m ago',
+      //     isOnline: true
+      //   },
+      //   {
+      //     id: 'mike_dev',
+      //     name: 'mike.dev',
+      //     avatar: 'm',
+      //     status: '2h ago',
+      //     isOnline: false
+      //   },
+      //   {
+      //     id: 'emma_d',
+      //     name: 'emma.d',
+      //     avatar: 'e',
+      //     status: 'active now',
+      //     isOnline: true
+      //   },
+      //   {
+      //     id: 'alex_r',
+      //     name: 'alex.r',
+      //     avatar: 'a',
+      //     status: 'yesterday',
+      //     isOnline: false
+      //   },
+      //   {
+      //     id: 'team_lead',
+      //     name: 'team.lead',
+      //     avatar: 't',
+      //     status: '3d ago',
+      //     isOnline: false
+      //   }
+      // ];
+
+      // Function to render contacts dynamically
+      function renderContacts(contacts) {
+        const contactsList = document.getElementById('contactsList');
+        const onlineCount = contacts.filter(contact => contact.isOnline).length;
+        
+        contactsList.innerHTML = '';
+        
+        contacts.forEach((contact, index) => {
+          const contactElement = document.createElement('div');
+          contactElement.className = `contact-item ${index === 0 ? 'active' : ''}`;
+          contactElement.onclick = () => selectContact(contactElement, contact.id, contact.name);
+          
+          contactElement.innerHTML = `
+            <div class="contact-avatar">
+              ${contact.name[0]}
+              ${contact.isActive ? '<div class="status-dot"></div>' : ''}
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">${contact.name}</div>
+              <div class="contact-status">${contact.lastSeen}</div>
+            </div>
+          `;
+          
+          contactsList.appendChild(contactElement);
+        });
+
+        // Update status indicator
+        document.getElementById('statusIndicator').textContent = 
+          `[${contacts.length}] contacts • [${onlineCount}] online`;
+      }
+
+      // Function to add a new contact (example usage)
+      function addContact(id, name, avatar, status, isOnline = false) {
+        contacts.push({ id, name, avatar, status, isOnline });
+        renderContacts();
+      }
+
+      // Function to remove a contact (example usage)
+      function removeContact(contactId) {
+        const index = contacts.findIndex(contact => contact.id === contactId);
+        if (index > -1) {
+          contacts.splice(index, 1);
+          renderContacts();
+        }
+      }
+
+      // Function to update contact status (example usage)
+      function updateContactStatus(contactId, newStatus, isOnline) {
+        const contact = contacts.find(contact => contact.id === contactId);
+        if (contact) {
+          contact.status = newStatus;
+          if (isOnline !== undefined) {
+            contact.isOnline = isOnline;
+          }
+          renderContacts();
+        }
+      }
+
       // Modal functionality
       function enterChat() {
         const nameInput = document.getElementById("nameInput");
@@ -200,9 +235,18 @@
       document
         .getElementById("nameForm")
         .addEventListener("submit", function (e) {
-          e.preventDefault(); // prevent reload
+          e.preventDefault();
           enterChat();
         });
+
+
+
+      
+      socket.on('allContacts',(contacts)=>{
+        renderContacts(contacts);
+      });
+
+
 
       function toggleSidebar() {
         const sidebar = document.getElementById("sidebar");
@@ -339,10 +383,11 @@
 
       // Initialize
       document.addEventListener("DOMContentLoaded", function () {
-        // Focus on name input when modal loads
+
+        
+        
         document.getElementById("nameInput").focus();
 
-        // Enable enter button when name is typed
         const nameInput = document.getElementById("nameInput");
         const enterButton = document.getElementById("enterButton");
 
@@ -513,6 +558,11 @@
       function showToaster(type, message) {
         toaster[type](type, message);
       }
+
+      // Example usage functions - you can call these from console or other parts of your app:
+      // addContact('new_user', 'john.doe', 'j', 'just now', true);
+      // removeContact('alex_r');
+      // updateContactStatus('sarah_j', 'online now', true);
     </script>
   </body>
 </html>

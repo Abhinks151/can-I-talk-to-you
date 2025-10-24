@@ -224,7 +224,7 @@ body::before {
 }
 
 .sidebar-header {
-  padding: 24px 20px;
+  padding: 25px 20px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     135deg,
